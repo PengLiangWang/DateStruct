@@ -1,5 +1,3 @@
-/* http://www.cnblogs.com/renyuan/archive/2013/05/21/3091506.html */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +8,21 @@ typedef struct Node{
     elemType element;
     struct Node *next;
 }Node;
+
+
+/* 找到一个节点的上一个节点*/
+static Node *findPre(Node *pHead, Node *p)
+{
+    Node *q;
+
+    q = pHead;
+
+    while(q->next != p)
+    {
+        q = q->next; 
+    }
+    return q;
+}
 
 
 /* 1.初始化线性表，即置单链表的表头指针为空 */
@@ -121,7 +134,6 @@ static int sizeList(Node *pHead)
         size ++;
         pHead = pHead->next;
     }
-    printf("sizeList函数执行, 链表长度: %d\n", size);
     return size;
 }
 
@@ -486,51 +498,111 @@ static int deleteEqualList(Node **pNode, elemType delelem)
 }
 
 /* 18.交换2个元素的位置 */
-static int ChangePosList(Node **pNode, int pos1, int pos2)
+static int ChangePosList(Node *pHead, int pos1, int pos2)
 {
-    Node *pHead1, *pHead2;
-    Node *pTemp;
-    int  i=0;
+    Node *p, *q;
+    int  i=0, j=0;
 
-    pHead1 = pHead2 = *pNode;
+    p = q = pHead;
 
-    pTemp = pHead1;
-
-    if(pHead1 == NULL)
+    if(pHead == NULL)
     {
         printf("链表为空.\n");
         return 0;
     }
-    if(pos1 < 1 || pos2 < 1 || pos1 > sizeList(pHead1) || pos2 > sizeList(pHead1) || pos1 >= pos2)
+    if(pos1 < 1 || pos2 < 1 || pos1 > sizeList(pHead) || pos2 > sizeList(pHead))
     {
         printf("pos值非法.\n");
         return 0;
     }
-    while(NULL != pHead1)
+    if(pos1 == 1 || pos2 == 1)
+    {
+        printf("其中一个节点为头节点, 不做交换.\n");
+        return 0;
+    }
+    if(pos1 == pos2)
+    {
+        printf("两节点指向同一个地方, 不需交换.\n");
+        return 0;
+    }
+    if(getelement(pHead, pos1) == getelement(pHead, pos2))
+    {
+        printf("两节点存放的内容相同, 不需交换.\n");
+        return 0;
+    }
+    while(NULL != p)
     {
         ++ i;
         if(i == pos1) 
             break;
-        pHead1=pHead1->next;
+        p=p->next;
     }
-    while(NULL != pHead2)
+    while(NULL != q)
     {
-        ++ i;
-        if(i == pos2)
+        ++ j;
+        if(j == pos2)
             break;
-        pHead2=pHead2->next;
+        q=q->next;
+    }
+    
+    if(p->next == q)
+    {
+        Node *pre_p=findPre(pHead, p);
+        pre_p->next = q;
+        p->next = q->next;
+        q->next = p;
+    }
+    else if(q->next == p)
+    {
+        Node *pre_q = findPre(pHead, q);
+        pre_q->next = p;
+        q->next = p->next;
+        q->next = q;
+    }
+    else
+    {
+        Node *pre_p = findPre(pHead, p);
+        Node *pre_q = findPre(pHead, q);
+        Node *after_p = p->next;
+
+        p->next = q->next;
+        q->next = after_p;
+        pre_p->next = q;
+        pre_q->next = p;
     }
 
-     return 1;
+    return 1;
 }
 
 
-/* 19.将线性表进行快速排序 */
-static int SortList()
+/* 19.将对链表进行快速排序 ,冒泡排序*/
+static int SortList(Node **pNode)
 {
-    
+    Node *pHead;
+    Node *pTemp;
+    elemType Temp;
+    int i, j;
+     
+    pHead = *pNode;
+    pTemp = pHead;
 
-
+    if(pHead == NULL)
+    {
+        printf("链表为空.\n");
+        return 0;
+    }
+    for(i=1; i<=sizeList(pTemp); i++)
+    {
+        for(j=i+1; j<=sizeList(pTemp); j++)
+        {
+            if(getelement(pTemp, i) > getelement(pTemp, j))    
+            {
+                ChangePosList(pTemp, i, j);
+            }
+        }
+    }
+    *pNode = pTemp;
+     return 1;
 }
 
 /*20. 链表反转 */
@@ -548,7 +620,7 @@ static int Reverse(Node **pNode)
     {
         q=p;
         p=p->next;
-        q->next = pHead->next;  //截断
+        q->next = pHead->next;  //截断放到新的pHead开头的链表中
         pHead->next = q;
     }
     elemType insertelem;
@@ -556,6 +628,8 @@ static int Reverse(Node **pNode)
     insertLastList(pNode, insertelem);     //将头节点接连到链表的尾部
     return 1;
 }
+
+
 int main(int argc, char *argv[])
 {
     
@@ -574,7 +648,7 @@ int main(int argc, char *argv[])
     printList(pList);
    
     isEmptyList(pList);
-    sizeList(pList);
+    printf("sizeList函数执行, 链表长度: %d\n", sizeList(pList));
 
     printf("\n********获取链表某个位置的值**********\n");
     posElem = getelement(pList, 3);
@@ -628,6 +702,14 @@ int main(int argc, char *argv[])
     Reverse(&pList);
     printList(pList);
 
+    
+    printf("\n*********交换两个位置的值(除头节点)*********\n");
+    ChangePosList(pList, 2,5);
+    printList(pList);
+
+    printf("\n*********链表排序(除头节点)*********\n");
+    SortList(&pList);
+    printList(pList);
 
     printf("\n*********清空链表*********\n");
     display_linkList(pList);
